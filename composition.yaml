@@ -1,0 +1,129 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: default.environments.pkg.platformnow.io
+  labels:
+    crossplane.io/xrd: xenvironments.pkg.platformnow.io
+spec:
+  compositeTypeRef:
+    apiVersion: pkg.platformnow.io/v1
+    kind: XEnvironment
+  resources:
+    - base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: ProviderConfig
+        spec:
+          credentials:
+            source: InjectedIdentity
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
+              - fromFieldPath: metadata.labels["crossplane.io/claim-name"]
+            strategy: string
+            string:
+              fmt: "%s-%s-environments-provider-k8s-pc-in"
+          toFieldPath: metadata.name
+      readinessChecks:
+        - type: None
+    - base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        metadata:
+          namespace: landscape-system
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                finalizers:
+                  - kubernetes
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
+              - fromFieldPath: metadata.labels["crossplane.io/claim-name"]
+            strategy: string
+            string:
+              fmt: "%s-%s-namespace"
+          toFieldPath: metadata.name
+        - fromFieldPath: metadata.labels["crossplane.io/claim-name"]
+          toFieldPath: spec.forProvider.manifest.metadata.name
+        - fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
+          toFieldPath: spec.forProvider.manifest.metadata.namespace
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
+              - fromFieldPath: metadata.labels["crossplane.io/claim-name"]
+            strategy: string
+            string:
+              fmt: "%s-%s-environments-provider-k8s-pc-in"
+          toFieldPath: spec.providerConfigRef.name
+    - base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        metadata:
+          namespace: landscape-system
+        spec:
+          deletionPolicy: Orphan
+          forProvider:
+            manifest:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                finalizers:
+                  - resources-finalizer.argocd.argoproj.io
+                name: resources
+              spec:
+                source:
+                  directory:
+                    recurse: true
+                  targetRevision: HEAD
+                destination:
+                  server: https://kubernetes.default.svc
+                syncPolicy:
+                  automated:
+                    selfHeal: true
+                    prune: true
+      readinessChecks:
+        - type: MatchString
+          fieldPath: status.conditions[1].status
+          matchString: "True"
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
+              - fromFieldPath: metadata.labels["crossplane.io/claim-name"]
+            strategy: string
+            string:
+              fmt: "%s-%s-argo-application"
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels["crossplane.io/claim-name"]
+          toFieldPath: spec.forProvider.manifest.metadata.namespace
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
+          toFieldPath: spec.forProvider.manifest.spec.project
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.directory
+          toFieldPath: spec.forProvider.manifest.spec.source.path
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels["crossplane.io/claim-name"]
+          toFieldPath: spec.forProvider.manifest.spec.destination.namespace
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.repoURL
+          toFieldPath: spec.forProvider.manifest.spec.source.repoURL
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels["crossplane.io/claim-namespace"]
+              - fromFieldPath: metadata.labels["crossplane.io/claim-name"]
+            strategy: string
+            string:
+              fmt: "%s-%s-environments-provider-k8s-pc-in"
+          toFieldPath: spec.providerConfigRef.name

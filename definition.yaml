@@ -1,0 +1,46 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xenvironments.pkg.platformnow.io
+spec:
+  group: pkg.platformnow.io
+  names:
+    kind: XEnvironment
+    listKind: XEnvironmentList
+    plural: xenvironments
+    singular: xenvironment
+    shortNames:
+      - xenv
+      - xenvs
+  claimNames:
+    kind: Environment
+    listKind: EnvironmentList
+    plural: environments
+    singular: environment
+    shortNames:
+      - env
+      - envs
+  defaultCompositionRef:
+    name: default.environments.pkg.platformnow.io
+  versions:
+    - name: v1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              properties:
+                deletionPolicy:
+                  description: DeletionPolicy specifies what will happen to the underlying external when this managed resource is deleted - either "Delete" or "Orphan" the external resource.
+                  type: string
+                  default: "Orphan"
+                repoURL:
+                  description: git repository url
+                  type: string
+                directory:
+                  description: git repository directory
+                  type: string
+                  default: "./"
+              required:
+                - repoURL

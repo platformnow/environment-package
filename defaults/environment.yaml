@@ -1,0 +1,7 @@
+apiVersion: pkg.platformnow.io/v1
+kind: Environment
+metadata:
+  name: dev1
+  namespace: default
+spec:
+  repoURL: "https://github.com/platformnow/testproject.git"

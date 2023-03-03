@@ -1,0 +1,18 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: environment-package
+  annotations:
+    meta.crossplane.io/maintainer: platfornow authors <info@platformnow.io>
+    meta.crossplane.io/keywords: platformnow, environment, package, kubernetes, idp
+    meta.crossplane.io/source: github.com/platformnow/environment-package
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: |
+      This Configuration provides the environment package for PlatformNow.
+      It is intended to be used with other PlatformNow packages.
+    meta.crossplane.io/readme: |
+      This Configuration bundles Cloud extensions and an API's for the environment
+      definition.
+spec:
+  crossplane:
+    version: ">=v1.11.0"
